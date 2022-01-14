@@ -30,7 +30,12 @@ const VMedia: React.FC<VMediaProps> = ({
 }) => {
   const navigation = useNavigation();
   const goToDetail = () => {
-    navigation.navigate("Stacks", { screen: "Detail" });
+    navigation.navigate("Stacks", {
+      screen: "Detail",
+      params: {
+        originalTitle,
+      },
+    });
   };
   return (
     <TouchableOpacity onPress={goToDetail}>
