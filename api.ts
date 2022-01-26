@@ -51,17 +51,19 @@ interface Fetchers<T> {
 }
 
 export const moviesApi: Fetchers<MovieResponse> = {
-  trending: () =>
-    fetch(`${BASE_URL}/trending/movie/week?api_key=${API_KEY}`).then((res) =>
-      res.json()
-    ),
+  trending: ({ pageParam }) =>
+    fetch(
+      `${BASE_URL}/trending/movie/week?api_key=${API_KEY}&language=en-US&page=${
+        typeof pageParam !== "number" ? "1" : pageParam
+      }`
+    ).then((res) => res.json()),
   upcoming: ({ pageParam }) =>
     fetch(
       `${BASE_URL}/movie/upcoming?api_key=${API_KEY}&language=en-US&page=${pageParam}`
     ).then((res) => res.json()),
-  nowPlaying: () =>
+  nowPlaying: ({ pageParam }) =>
     fetch(
-      `${BASE_URL}/movie/now_playing?api_key=${API_KEY}&language=en-US&page=1`
+      `${BASE_URL}/movie/now_playing?api_key=${API_KEY}&language=en-US&page=${pageParam}`
     ).then((res) => res.json()),
   search: ({ queryKey }) => {
     const [_, query] = queryKey;

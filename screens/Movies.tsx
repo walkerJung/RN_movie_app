@@ -38,21 +38,66 @@ const HSeparator = styled.View`
 const Movies: React.FC<NativeStackScreenProps<any, "Movies">> = () => {
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
-  const { isLoading: nowPlayingLoading, data: nowPlayingData } =
-    useQuery<MovieResponse>(["movies", "nowPlaying"], moviesApi.nowPlaying);
+  const {
+    isLoading: nowPlayingLoading,
+    data: nowPlayingData,
+    hasNextPage: nowPlayingHasNextPage,
+    fetchNextPage: nowPlayingFetchNextPage,
+  } = useInfiniteQuery<MovieResponse>(
+    ["movies", "nowPlaying"],
+    moviesApi.nowPlaying,
+    {
+      getNextPageParam: (currentPage) => {
+        const nextPage = currentPage.page + 1;
+        return nextPage > currentPage.total_pages ? null : nextPage;
+      },
+    }
+  );
+
   const {
     isLoading: upcomingLoading,
     data: upcomingData,
-    hasNextPage,
-    fetchNextPage,
-  } = useInfiniteQuery(["movies", "upcoming"], moviesApi.upcoming, {
-    getNextPageParam: (currentPage) => {
-      const nextPage = currentPage.page + 1;
-      return nextPage > currentPage.total_pages ? null : nextPage;
-    },
-  });
-  const { isLoading: trendingLoading, data: trendingData } =
-    useQuery<MovieResponse>(["movies", "trending"], moviesApi.trending);
+    hasNextPage: upcomingHasNextPage,
+    fetchNextPage: upcomingFetchNextPage,
+  } = useInfiniteQuery<MovieResponse>(
+    ["movies", "upcoming"],
+    moviesApi.upcoming,
+    {
+      getNextPageParam: (currentPage) => {
+        const nextPage = currentPage.page + 1;
+        return nextPage > currentPage.total_pages ? null : nextPage;
+      },
+    }
+  );
+
+  const {
+    isLoading: trendingLoading,
+    data: trendingData,
+    hasNextPage: trendingHasNextPage,
+    fetchNextPage: trendingFetchNextPage,
+  } = useInfiniteQuery<MovieResponse>(
+    ["movies", "trending"],
+    moviesApi.trending,
+    {
+      getNextPageParam: (currentPage) => {
+        const nextPage = currentPage.page + 1;
+        return nextPage > currentPage.total_pages ? null : nextPage;
+      },
+    }
+  );
+
+  const upcomingDataToFlat = upcomingData?.pages
+    .map((movie) => movie.results)
+    .flat();
+
+  const nowPlayingDataToFlat = nowPlayingData?.pages
+    .map((movie) => movie.results)
+    .flat();
+
+  const trendingDataToFlat = trendingData?.pages
+    .map((movie) => movie.results)
+    .flat();
+
   const onRefresh = async () => {
     setRefreshing(true);
     await queryClient.refetchQueries(["movies"]);
@@ -61,8 +106,8 @@ const Movies: React.FC<NativeStackScreenProps<any, "Movies">> = () => {
   const loading = nowPlayingLoading || upcomingLoading || trendingLoading;
 
   const loadMore = () => {
-    if (hasNextPage) {
-      fetchNextPage();
+    if (upcomingHasNextPage) {
+      upcomingFetchNextPage();
     }
   };
   return loading ? (
@@ -87,7 +132,7 @@ const Movies: React.FC<NativeStackScreenProps<any, "Movies">> = () => {
               height: SCREEN_HEIGHT / 4,
             }}
           >
-            {nowPlayingData?.results.map((movie) => (
+            {nowPlayingDataToFlat?.map((movie) => (
               <Slide
                 key={movie.id}
                 backdropPath={movie.backdrop_path || ""}
@@ -99,13 +144,18 @@ const Movies: React.FC<NativeStackScreenProps<any, "Movies">> = () => {
               />
             ))}
           </Swiper>
-          {trendingData ? (
-            <HList title="Trending Movies" data={trendingData.results} />
+          {trendingDataToFlat ? (
+            <HList
+              title="Trending Movies"
+              data={trendingDataToFlat}
+              trendingHasNextPage={trendingHasNextPage}
+              trendingFetchNextPage={trendingFetchNextPage}
+            />
           ) : null}
           <ComingSoonTitle>Coming soon</ComingSoonTitle>
         </>
       }
-      data={upcomingData.pages.map((page) => page.results).flat()}
+      data={upcomingDataToFlat}
       keyExtractor={(item) => item.id + ""}
       ItemSeparatorComponent={HSeparator}
       renderItem={({ item }) => (
