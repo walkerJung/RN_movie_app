@@ -2,7 +2,6 @@ import React from "react";
 import { FlatList } from "react-native";
 import styled from "styled-components/native";
 import VMedia from "./VMedia";
-import { loadMore } from "../utils";
 
 const ListContainer = styled.View`
   margin-bottom: 40px;
